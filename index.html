@@ -55,7 +55,7 @@
 
     <script>
         // ⚠️ 請務必將下方網址換成你的 Google Apps Script 網頁應用程式網址 ⚠️
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLDAVPTtjHifbleOTm2YvlsOisMQzO8XtEMBMRq2b2BoOvq8SpWgcBOk8G-ig7xd1j/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtPVOc4NqmBwXxfGoTNsoxETakGKob5w74T1mzCumI3qZBMx816aMRIFZpMcx1Myh8/exec";
 
         let selectedFile = null;
 
@@ -113,9 +113,8 @@
                 if (selectedFile.type === 'image/jpeg' || selectedFile.type === 'image/jpg') {
                     try {
                         const exifObj = piexif.load(originalDataUrl);
-                        // 修正方向參數：Canvas 繪製時會自動轉正，所以必須將 EXIF 內的旋轉資訊歸零(設為1)，否則下載後照片會再被轉一次
                         if (exifObj["0th"] && exifObj["0th"][piexif.ImageIFD.Orientation]) {
-                            exifObj["0th"][piexif.ImageIFD.Orientation] = 1;
+                            exifObj["0th"][piexif.ImageIFD.Orientation] = 1; // 重設旋轉參數
                         }
                         exifStr = piexif.dump(exifObj);
                     } catch (e) {
@@ -181,23 +180,34 @@
                             body: JSON.stringify(payload)
                         });
                         
-                        document.getElementById("status").style.color = "green";
-                        document.getElementById("status").innerText = "上傳成功！";
+                        // ===== 這裡就是更新的地方：取得後端真實的回傳結果 =====
+                        const result = await response.json();
                         
-                        // 清空表單
-                        document.getElementById("name").value = "";
-                        document.getElementById("desc").value = "";
-                        selectedFile = null;
-                        document.getElementById('photoCamera').value = "";
-                        document.getElementById('photoGallery').value = "";
-                        document.getElementById('fileNameDisplay').innerText = "尚未選擇照片";
-                        document.getElementById('fileNameDisplay').style.color = "#555";
-                        document.getElementById("coords").innerText = "尚未獲取定位";
-                        document.getElementById("lat").value = "";
-                        document.getElementById("lng").value = "";
+                        if (result.status === "success") {
+                            document.getElementById("status").style.color = "green";
+                            document.getElementById("status").innerText = "上傳成功！";
+                            
+                            // 清空表單
+                            document.getElementById("name").value = "";
+                            document.getElementById("desc").value = "";
+                            selectedFile = null;
+                            document.getElementById('photoCamera').value = "";
+                            document.getElementById('photoGallery').value = "";
+                            document.getElementById('fileNameDisplay').innerText = "尚未選擇照片";
+                            document.getElementById('fileNameDisplay').style.color = "#555";
+                            document.getElementById("coords").innerText = "尚未獲取定位";
+                            document.getElementById("lat").value = "";
+                            document.getElementById("lng").value = "";
+                        } else {
+                            // 顯示 Google Apps Script 回傳的真實錯誤原因
+                            document.getElementById("status").style.color = "red";
+                            document.getElementById("status").innerText = "雲端硬碟錯誤：" + result.message;
+                        }
+                        // =======================================================
+
                     } catch (error) {
                         document.getElementById("status").style.color = "red";
-                        document.getElementById("status").innerText = "上傳失敗，請檢查網路連線。";
+                        document.getElementById("status").innerText = "網路連線失敗，請稍後再試。";
                     } finally {
                         document.getElementById("submitBtn").disabled = false;
                     }
