@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>糖廠鐵路遺跡現地調查表</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+        input, textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; border: none; font-size: 16px; cursor: pointer; }
+        button:disabled { background-color: #ccc; }
+        #status { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>🛤️ 糖鐵遺跡現地調查</h2>
+    
+    <label>遺跡名稱：</label>
+    <input type="text" id="name" placeholder="例如：蒜頭糖廠XX車站" required>
+
+    <label>簡介與現況描述：</label>
+    <textarea id="desc" rows="4" placeholder="描述現場狀況..." required></textarea>
+
+    <label>現地照片：</label>
+    <!-- accept="image/*" 加上 capture="environment" 會在手機上優先開啟後鏡頭相機 -->
+    <input type="file" id="photo" accept="image/*" capture="environment" required>
+
+    <label>GPS 座標：</label>
+    <button type="button" id="gpsBtn" onclick="getLocation()">📍 獲取目前定位</button>
+    <p id="coords">尚未獲取定位</p>
+    <input type="hidden" id="lat">
+    <input type="hidden" id="lng">
+
+    <button type="button" id="submitBtn" onclick="submitForm()">上傳調查資料</button>
+    <p id="status"></p>
+
+    <script>
+        // 你在 Google Apps Script 取得的部署網址填入下方
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOBUyHziCwnZibD1RawgqAPVxeQKyJVVW6nlY1t4aqFhPhte1Sh3m23KPYaLNsZjoC/exec";
+
+        // 獲取 GPS 定位
+        function getLocation() {
+            const coordsText = document.getElementById("coords");
+            coordsText.innerText = "定位中，請稍候...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById("lat").value = position.coords.latitude;
+                    document.getElementById("lng").value = position.coords.longitude;
+                    coordsText.innerText = `緯度: ${position.coords.latitude}\n經度: ${position.coords.longitude}`;
+                }, function(error) {
+                    coordsText.innerText = "無法獲取定位，請確認手機是否開啟 GPS 權限。";
+                });
+            } else {
+                coordsText.innerText = "您的瀏覽器不支援定位功能。";
+            }
+        }
+
+        // 處理資料上傳
+        async function submitForm() {
+            const name = document.getElementById("name").value;
+            const desc = document.getElementById("desc").value;
+            const lat = document.getElementById("lat").value;
+            const lng = document.getElementById("lng").value;
+            const photoInput = document.getElementById("photo");
+
+            if (!name || !desc || !lat || photoInput.files.length === 0) {
+                alert("請確認名稱、簡介、照片與 GPS 定位皆已完成！");
+                return;
+            }
+
+            document.getElementById("status").innerText = "資料上傳中，請勿關閉網頁...";
+            document.getElementById("submitBtn").disabled = true;
+
+            const file = photoInput.files[0];
+            const reader = new FileReader();
+            
+            // 將照片轉為 Base64 格式才能透過純前端傳送給 Google Apps Script
+            reader.onload = async function() {
+                const base64Data = reader.result.split(',')[1];
+                
+                const payload = {
+                    name: name,
+                    desc: desc,
+                    lat: lat,
+                    lng: lng,
+                    image: base64Data,
+                    mimeType: file.type,
+                    filename: file.name
+                };
+
+                try {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    document.getElementById("status").style.color = "green";
+                    document.getElementById("status").innerText = "上傳成功！";
+                    
+                    // 清空表單
+                    document.getElementById("name").value = "";
+                    document.getElementById("desc").value = "";
+                    document.getElementById("photo").value = "";
+                    document.getElementById("coords").innerText = "尚未獲取定位";
+                    document.getElementById("lat").value = "";
+                    document.getElementById("lng").value = "";
+                } catch (error) {
+                    document.getElementById("status").innerText = "上傳失敗，請檢查網路連線。";
+                } finally {
+                    document.getElementById("submitBtn").disabled = false;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
