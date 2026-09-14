@@ -4,11 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>糖廠鐵路遺跡現地調查表</title>
+    <!-- 載入 piexif.js 函式庫來處理 EXIF 資料 -->
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-        input, textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-        button { background-color: #4CAF50; color: white; border: none; font-size: 16px; cursor: pointer; }
-        button:disabled { background-color: #ccc; }
+        input[type="text"], textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; font-size: 16px; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        /* 雙按鈕排版設定 */
+        .btn-group { display: flex; gap: 10px; margin-bottom: 5px; }
+        .btn-camera { background-color: #2196F3; flex: 1; }
+        .btn-gallery { background-color: #FF9800; flex: 1; }
+        
+        #fileNameDisplay { font-size: 14px; color: #555; margin-top: 0; margin-bottom: 15px; }
         #status { color: red; font-weight: bold; }
     </style>
 </head>
@@ -23,8 +32,17 @@
     <textarea id="desc" rows="4" placeholder="描述現場狀況..." required></textarea>
 
     <label>現地照片：</label>
-    <!-- accept="image/*" 加上 capture="environment" 會在手機上優先開啟後鏡頭相機 -->
-    <input type="file" id="photo" accept="image/*" capture="environment" required>
+    <div class="btn-group">
+        <!-- 點擊觸發隱藏的相機輸入框 -->
+        <button type="button" class="btn-camera" onclick="document.getElementById('photoCamera').click()">📷 開啟相機</button>
+        <!-- 點擊觸發隱藏的相簿輸入框 -->
+        <button type="button" class="btn-gallery" onclick="document.getElementById('photoGallery').click()">🖼️ 選擇相簿</button>
+    </div>
+    <p id="fileNameDisplay">尚未選擇照片</p>
+
+    <!-- 隱藏的 input，用來實際接收檔案 -->
+    <input type="file" id="photoCamera" accept="image/jpeg, image/png" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+    <input type="file" id="photoGallery" accept="image/jpeg, image/png" style="display: none;" onchange="handleFileSelect(this)">
 
     <label>GPS 座標：</label>
     <button type="button" id="gpsBtn" onclick="getLocation()">📍 獲取目前定位</button>
@@ -36,8 +54,19 @@
     <p id="status"></p>
 
     <script>
-        // 你在 Google Apps Script 取得的部署網址填入下方
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOBUyHziCwnZibD1RawgqAPVxeQKyJVVW6nlY1t4aqFhPhte1Sh3m23KPYaLNsZjoC/exec";
+        // ⚠️ 請務必將下方網址換成你的 Google Apps Script 網頁應用程式網址 ⚠️
+        const GOOGLE_SCRIPT_URL = "這裡貼上你的 Google Apps Script 網頁應用程式網址";
+
+        let selectedFile = null;
+
+        // 處理照片選擇的顯示
+        function handleFileSelect(input) {
+            if (input.files.length > 0) {
+                selectedFile = input.files[0];
+                document.getElementById('fileNameDisplay').innerText = "✅ 已選擇：" + selectedFile.name;
+                document.getElementById('fileNameDisplay').style.color = "green";
+            }
+        }
 
         // 獲取 GPS 定位
         function getLocation() {
@@ -57,62 +86,125 @@
             }
         }
 
-        // 處理資料上傳
+        // 處理資料上傳 (包含 EXIF 保留與照片壓縮)
         async function submitForm() {
             const name = document.getElementById("name").value;
             const desc = document.getElementById("desc").value;
             const lat = document.getElementById("lat").value;
             const lng = document.getElementById("lng").value;
-            const photoInput = document.getElementById("photo");
 
-            if (!name || !desc || !lat || photoInput.files.length === 0) {
+            if (!name || !desc || !lat || !selectedFile) {
                 alert("請確認名稱、簡介、照片與 GPS 定位皆已完成！");
                 return;
             }
 
-            document.getElementById("status").innerText = "資料上傳中，請勿關閉網頁...";
+            document.getElementById("status").innerText = "照片壓縮處理與上傳中，請稍候...";
+            document.getElementById("status").style.color = "red";
             document.getElementById("submitBtn").disabled = true;
 
-            const file = photoInput.files[0];
             const reader = new FileReader();
             
-            // 將照片轉為 Base64 格式才能透過純前端傳送給 Google Apps Script
-            reader.onload = async function() {
-                const base64Data = reader.result.split(',')[1];
-                
-                const payload = {
-                    name: name,
-                    desc: desc,
-                    lat: lat,
-                    lng: lng,
-                    image: base64Data,
-                    mimeType: file.type,
-                    filename: file.name
-                };
+            // 讀取照片檔案
+            reader.onload = function(event) {
+                const originalDataUrl = event.target.result;
+                let exifStr = null;
 
-                try {
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: "POST",
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    document.getElementById("status").style.color = "green";
-                    document.getElementById("status").innerText = "上傳成功！";
-                    
-                    // 清空表單
-                    document.getElementById("name").value = "";
-                    document.getElementById("desc").value = "";
-                    document.getElementById("photo").value = "";
-                    document.getElementById("coords").innerText = "尚未獲取定位";
-                    document.getElementById("lat").value = "";
-                    document.getElementById("lng").value = "";
-                } catch (error) {
-                    document.getElementById("status").innerText = "上傳失敗，請檢查網路連線。";
-                } finally {
-                    document.getElementById("submitBtn").disabled = false;
+                // 嘗試提取 EXIF 資料 (僅限 JPEG 格式)
+                if (selectedFile.type === 'image/jpeg' || selectedFile.type === 'image/jpg') {
+                    try {
+                        const exifObj = piexif.load(originalDataUrl);
+                        // 修正方向參數：Canvas 繪製時會自動轉正，所以必須將 EXIF 內的旋轉資訊歸零(設為1)，否則下載後照片會再被轉一次
+                        if (exifObj["0th"] && exifObj["0th"][piexif.ImageIFD.Orientation]) {
+                            exifObj["0th"][piexif.ImageIFD.Orientation] = 1;
+                        }
+                        exifStr = piexif.dump(exifObj);
+                    } catch (e) {
+                        console.warn("讀取 EXIF 失敗或圖片無 EXIF 資料", e);
+                    }
                 }
+
+                const img = new Image();
+                img.src = originalDataUrl;
+                
+                img.onload = async function() {
+                    // 設定最大尺寸 1200px
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    // Canvas 壓縮
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                    // 將暫存的 EXIF 寫回壓縮後的新圖片
+                    if (exifStr) {
+                        try {
+                            compressedDataUrl = piexif.insert(exifStr, compressedDataUrl);
+                        } catch (e) {
+                            console.warn("寫回 EXIF 失敗", e);
+                        }
+                    }
+                    
+                    const base64Data = compressedDataUrl.split(',')[1];
+                    
+                    const payload = {
+                        name: name,
+                        desc: desc,
+                        lat: lat,
+                        lng: lng,
+                        image: base64Data,
+                        mimeType: 'image/jpeg',
+                        filename: 'compressed_' + selectedFile.name.replace(/\.[^/.]+$/, "") + '.jpg'
+                    };
+
+                    try {
+                        const response = await fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        document.getElementById("status").style.color = "green";
+                        document.getElementById("status").innerText = "上傳成功！";
+                        
+                        // 清空表單
+                        document.getElementById("name").value = "";
+                        document.getElementById("desc").value = "";
+                        selectedFile = null;
+                        document.getElementById('photoCamera').value = "";
+                        document.getElementById('photoGallery').value = "";
+                        document.getElementById('fileNameDisplay').innerText = "尚未選擇照片";
+                        document.getElementById('fileNameDisplay').style.color = "#555";
+                        document.getElementById("coords").innerText = "尚未獲取定位";
+                        document.getElementById("lat").value = "";
+                        document.getElementById("lng").value = "";
+                    } catch (error) {
+                        document.getElementById("status").style.color = "red";
+                        document.getElementById("status").innerText = "上傳失敗，請檢查網路連線。";
+                    } finally {
+                        document.getElementById("submitBtn").disabled = false;
+                    }
+                };
             };
-            reader.readAsDataURL(file);
+            
+            reader.readAsDataURL(selectedFile);
         }
     </script>
 </body>
