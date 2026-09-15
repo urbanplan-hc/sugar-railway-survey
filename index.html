@@ -3,37 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚞糖廠鐵路遺跡現地調查表</title>
+    <title>糖廠鐵路遺跡現地調查表</title>
     <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, '微軟正黑體', sans-serif; background-color: #FDF9F1; color: #5A4B3C; padding: 15px; max-width: 500px; margin: auto; }
-        h2 { background-color: #7AA258; color: white; text-align: center; padding: 15px; border-radius: 12px; font-size: 22px; margin-top: 0; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(122, 162, 88, 0.2); }
-        .form-card { background-color: #FFFFFF; border: 2px solid #EBE1D5; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-        .card-title { color: #7AA258; font-weight: bold; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px dashed #EBE1D5; display: flex; align-items: center; gap: 8px; }
+        /* 1. 溫暖的米色背景與字體設定 */
+        body { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, '微軟正黑體', sans-serif; 
+            background-color: #FDF9F1; 
+            color: #5A4B3C; 
+            padding: 15px; 
+            max-width: 500px; 
+            margin: auto; 
+        }
+
+        /* 2. 頂部主視覺標題 */
+        h2 {
+            background-color: #7AA258; 
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(122, 162, 88, 0.2);
+            letter-spacing: 1px;
+        }
+
+        /* 3. 卡片式排版 */
+        .form-card {
+            background-color: #FFFFFF;
+            border: 2px solid #EBE1D5; 
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .card-title {
+            color: #7AA258;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed #EBE1D5; 
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 4. 輸入框與文字區塊美化 */
         label { font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: #796652; }
-        input[type="text"], textarea { width: 100%; margin-bottom: 15px; padding: 12px; box-sizing: border-box; font-size: 16px; border: 2px solid #EBE1D5; border-radius: 10px; background-color: #FAFAFA; color: #5A4B3C; transition: border-color 0.3s; }
+        input[type="text"], textarea { 
+            width: 100%; margin-bottom: 15px; padding: 12px; box-sizing: border-box; 
+            font-size: 16px; border: 2px solid #EBE1D5; border-radius: 10px;
+            background-color: #FAFAFA; color: #5A4B3C; transition: border-color 0.3s;
+        }
         input[type="text"]:focus, textarea:focus { border-color: #7AA258; outline: none; background-color: #FFF; }
-        button { width: 100%; padding: 14px; border: none; cursor: pointer; border-radius: 10px; font-size: 16px; font-weight: bold; transition: transform 0.1s, box-shadow 0.1s; }
+
+        /* 5. 按鈕美化 */
+        button { 
+            width: 100%; padding: 14px; border: none; cursor: pointer; 
+            border-radius: 10px; font-size: 16px; font-weight: bold; transition: transform 0.1s;
+        }
         button:active { transform: scale(0.98); }
-        button:disabled { background-color: #D7CCC8; color: #8D6E63; cursor: not-allowed; box-shadow: none; }
+        button:disabled { background-color: #D7CCC8; color: #8D6E63; cursor: not-allowed; }
+        
         .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
         .btn-camera { background-color: #FFF3E0; color: #E65100; border: 2px solid #FFCC80; }
         .btn-gallery { background-color: #E8F5E9; color: #2E7D32; border: 2px solid #A5D6A7; }
         #gpsBtn { background-color: #E3F2FD; color: #1565C0; border: 2px solid #90CAF9; margin-bottom: 5px;}
-        #submitBtn { background-color: #7AA258; color: white; border-radius: 30px; font-size: 18px; box-shadow: 0 4px 10px rgba(122, 162, 88, 0.4); margin-top: 10px; }
-        #fileNameDisplay { font-size: 14px; color: #888; margin-top: 5px; margin-bottom: 15px; text-align: center; }
-        #coords { font-size: 14px; color: #888; text-align: center; margin-top: 5px; margin-bottom: 15px;}
-        #status { text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 15px;}
+        #submitBtn { background-color: #7AA258; color: white; border-radius: 30px; font-size: 18px; margin-top: 10px; box-shadow: 0 4px 10px rgba(122, 162, 88, 0.4); }
+
+        #fileNameDisplay, #coords { font-size: 14px; color: #888; text-align: center; margin-top: 5px; margin-bottom: 15px; }
+        #status { text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 15px; }
+        
         #progressContainer { display: none; margin-bottom: 15px; padding: 15px; background-color: #FFF; border: 2px solid #EBE1D5; border-radius: 12px; }
         progress { width: 100%; height: 18px; border-radius: 10px; overflow: hidden; }
         progress::-webkit-progress-bar { background-color: #F0F0F0; border-radius: 10px; }
         progress::-webkit-progress-value { background-color: #7AA258; border-radius: 10px; }
         #progressText { text-align: center; font-size: 14px; color: #5A4B3C; margin-top: 8px; font-weight: bold; }
+
+        /* 6. 頁尾版權與單位宣告 */
+        .footer {
+            text-align: center;
+            font-size: 13px;
+            color: #8D6E63; /* 柔和的咖啡色 */
+            margin-top: 30px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+            border-top: 2px dashed #EBE1D5; /* 頂部虛線分隔 */
+            padding-top: 20px;
+        }
+        .footer p { margin: 0; }
     </style>
 </head>
 <body>
 
-    <h2>🚂 糖鐵遺跡現地調查</h2>
+    <h2>🛤️ 糖鐵遺跡現地調查</h2>
     
     <div class="form-card">
         <div class="card-title">📝 基本資料 (必填)</div>
@@ -50,8 +117,6 @@
             <button type="button" class="btn-gallery" onclick="document.getElementById('photoGallery').click()">🖼️ 選擇相簿</button>
         </div>
         <p id="fileNameDisplay">尚未選擇照片</p>
-        
-        <!-- 將 capture 改為 camera 增強相容性 -->
         <input type="file" id="photoCamera" accept="image/*" capture="camera" style="display: none;" onchange="handleFileSelect(this)">
         <input type="file" id="photoGallery" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
     </div>
@@ -63,12 +128,18 @@
         <input type="hidden" id="lat">
         <input type="hidden" id="lng">
         <button type="button" id="submitBtn" onclick="submitForm()">🚀 確認送出調查資料</button>
-        
         <p id="status"></p>
         <div id="progressContainer">
             <progress id="progressBar" value="0" max="100"></progress>
             <div id="progressText">0%</div>
         </div>
+    </div>
+
+    <!-- 頁尾單位宣告區塊 -->
+    <div class="footer">
+        <p>指導單位：嘉義市政府</p>
+        <p>主辦單位：嘉義市博愛社區大學</p>
+        <p>網頁設計：鄭伊茜</p>
     </div>
 
     <script>
@@ -125,7 +196,6 @@
                 let exifStr = null;
 
                 try {
-                    // 如果圖片太大，piexif 可能會當機，用 try-catch 包起來
                     if (selectedFile.type === 'image/jpeg' || selectedFile.type === 'image/jpg') {
                         const exifObj = piexif.load(originalDataUrl);
                         if (exifObj["0th"] && exifObj["0th"][piexif.ImageIFD.Orientation]) {
@@ -140,7 +210,6 @@
                 const img = new Image();
                 img.src = originalDataUrl;
                 
-                // 圖片載入失敗時的防呆
                 img.onerror = function() {
                     document.getElementById("status").innerText = "❌ 無法讀取圖片，請換一張照片試試。";
                     document.getElementById("status").style.color = "red";
@@ -243,7 +312,6 @@
                             document.getElementById("status").innerText = "雲端硬碟錯誤：" + result.message;
                         }
                     } catch (error) {
-                        // 攔截所有壓縮過程或傳輸過程的當機，並顯示在畫面上
                         if(progressInterval) clearInterval(progressInterval);
                         document.getElementById("status").style.color = "red";
                         document.getElementById("status").innerText = "系統錯誤：" + error.message;
