@@ -18,7 +18,12 @@
         .btn-gallery { background-color: #FF9800; flex: 1; }
         
         #fileNameDisplay { font-size: 14px; color: #555; margin-top: 0; margin-bottom: 15px; }
-        #status { color: red; font-weight: bold; }
+        #status { color: red; font-weight: bold; margin-bottom: 5px;}
+        
+        /* 進度條樣式 */
+        #progressContainer { display: none; margin-bottom: 15px; }
+        progress { width: 100%; height: 22px; }
+        #progressText { text-align: center; font-size: 14px; color: #333; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -51,7 +56,13 @@
     <input type="hidden" id="lng">
 
     <button type="button" id="submitBtn" onclick="submitForm()">上傳調查資料</button>
+    
+    <!-- 狀態與進度條區塊 -->
     <p id="status"></p>
+    <div id="progressContainer">
+        <progress id="progressBar" value="0" max="100"></progress>
+        <div id="progressText">0%</div>
+    </div>
 
     <script>
         // ⚠️ 請務必將下方網址換成你的 Google Apps Script 網頁應用程式網址 ⚠️
@@ -98,9 +109,11 @@
                 return;
             }
 
-            document.getElementById("status").innerText = "照片壓縮處理與上傳中，請稍候...";
-            document.getElementById("status").style.color = "red";
+            // 初始化介面狀態
+            document.getElementById("status").innerText = "📸 照片壓縮處理中...";
+            document.getElementById("status").style.color = "#FF9800"; // 橘色提示
             document.getElementById("submitBtn").disabled = true;
+            document.getElementById("progressContainer").style.display = "none"; // 壓縮時先不顯示進度條
 
             const reader = new FileReader();
             
@@ -174,18 +187,59 @@
                         filename: 'compressed_' + selectedFile.name.replace(/\.[^/.]+$/, "") + '.jpg'
                     };
 
+                    // 開始準備上傳，顯示進度條
+                    document.getElementById("status").innerText = "🚀 正在傳送資料...";
+                    document.getElementById("progressContainer").style.display = "block";
+                    document.getElementById("progressBar").value = 0;
+                    document.getElementById("progressText").innerText = "0%";
+
                     try {
-                        const response = await fetch(GOOGLE_SCRIPT_URL, {
-                            method: "POST",
-                            body: JSON.stringify(payload)
+                        // 使用 Promise 包裝 XMLHttpRequest 以支援進度條
+                        const result = await new Promise((resolve, reject) => {
+                            const xhr = new XMLHttpRequest();
+                            xhr.open("POST", GOOGLE_SCRIPT_URL, true);
+                            
+                            // 監聽上傳進度 (關鍵部分)
+                            xhr.upload.onprogress = function(event) {
+                                if (event.lengthComputable) {
+                                    const percent = Math.round((event.loaded / event.total) * 100);
+                                    document.getElementById("progressBar").value = percent;
+                                    
+                                    if (percent < 100) {
+                                        document.getElementById("progressText").innerText = `上傳中... ${percent}%`;
+                                    } else {
+                                        document.getElementById("progressText").innerText = `100% (等待 Google 伺服器寫入硬碟中...)`;
+                                    }
+                                }
+                            };
+
+                            // 處理回傳結果
+                            xhr.onload = function() {
+                                if (xhr.status >= 200 && xhr.status < 300) {
+                                    try {
+                                        resolve(JSON.parse(xhr.responseText));
+                                    } catch (e) {
+                                        reject(new Error("解析回傳結果失敗"));
+                                    }
+                                } else {
+                                    reject(new Error("伺服器錯誤狀態碼：" + xhr.status));
+                                }
+                            };
+
+                            // 處理網路錯誤
+                            xhr.onerror = function() {
+                                reject(new Error("網路連線失敗"));
+                            };
+
+                            // 送出資料
+                            xhr.send(JSON.stringify(payload));
                         });
                         
-                        // ===== 這裡就是更新的地方：取得後端真實的回傳結果 =====
-                        const result = await response.json();
-                        
+                        // 處理回傳成功
                         if (result.status === "success") {
                             document.getElementById("status").style.color = "green";
-                            document.getElementById("status").innerText = "上傳成功！";
+                            document.getElementById("status").innerText = "🎉 上傳成功！";
+                            document.getElementById("progressContainer").style.display = "none";
                             
                             // 清空表單
                             document.getElementById("name").value = "";
@@ -199,15 +253,12 @@
                             document.getElementById("lat").value = "";
                             document.getElementById("lng").value = "";
                         } else {
-                            // 顯示 Google Apps Script 回傳的真實錯誤原因
                             document.getElementById("status").style.color = "red";
                             document.getElementById("status").innerText = "雲端硬碟錯誤：" + result.message;
                         }
-                        // =======================================================
-
                     } catch (error) {
                         document.getElementById("status").style.color = "red";
-                        document.getElementById("status").innerText = "網路連線失敗，請稍後再試。";
+                        document.getElementById("status").innerText = error.message || "網路連線失敗，請稍後再試。";
                     } finally {
                         document.getElementById("submitBtn").disabled = false;
                     }
