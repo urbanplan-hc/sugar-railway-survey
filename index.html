@@ -4,103 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>糖廠鐵路遺跡現地調查表</title>
-    <!-- 載入 piexif.js 函式庫來處理 EXIF 資料 -->
     <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <style>
-        /* 1. 溫暖的米色背景與字體設定 */
-        body { 
-            font-family: 'Helvetica Neue', Helvetica, Arial, '微軟正黑體', sans-serif; 
-            background-color: #FDF9F1; /* 米色背景 */
-            color: #5A4B3C; /* 深咖啡色字體 */
-            padding: 15px; 
-            max-width: 500px; 
-            margin: auto; 
-        }
-
-        /* 2. 頂部主視覺標題 (模仿綠色橫幅) */
-        h2 {
-            background-color: #7AA258; /* 抹茶綠 */
-            color: white;
-            text-align: center;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 22px;
-            margin-top: 0;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(122, 162, 88, 0.2);
-            letter-spacing: 1px;
-        }
-
-        /* 3. 卡片式排版 (模仿白底圓角區塊) */
-        .form-card {
-            background-color: #FFFFFF;
-            border: 2px solid #EBE1D5; /* 淺奶茶色邊框 */
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-        }
-
-        /* 卡片內的小標題 */
-        .card-title {
-            color: #7AA258;
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px dashed #EBE1D5; /* 虛線分隔線 */
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* 4. 輸入框與文字區塊美化 */
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, '微軟正黑體', sans-serif; background-color: #FDF9F1; color: #5A4B3C; padding: 15px; max-width: 500px; margin: auto; }
+        h2 { background-color: #7AA258; color: white; text-align: center; padding: 15px; border-radius: 12px; font-size: 22px; margin-top: 0; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(122, 162, 88, 0.2); }
+        .form-card { background-color: #FFFFFF; border: 2px solid #EBE1D5; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .card-title { color: #7AA258; font-weight: bold; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px dashed #EBE1D5; display: flex; align-items: center; gap: 8px; }
         label { font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: #796652; }
-        input[type="text"], textarea { 
-            width: 100%; 
-            margin-bottom: 15px; 
-            padding: 12px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-            border: 2px solid #EBE1D5;
-            border-radius: 10px;
-            background-color: #FAFAFA;
-            color: #5A4B3C;
-            transition: border-color 0.3s;
-        }
-        input[type="text"]:focus, textarea:focus {
-            border-color: #7AA258; /* 點擊時外框變綠色 */
-            outline: none;
-            background-color: #FFF;
-        }
-
-        /* 5. 按鈕美化 (圓角、圖示、跳色) */
-        button { 
-            width: 100%; padding: 14px; border: none; cursor: pointer; 
-            border-radius: 10px; font-size: 16px; font-weight: bold; 
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
+        input[type="text"], textarea { width: 100%; margin-bottom: 15px; padding: 12px; box-sizing: border-box; font-size: 16px; border: 2px solid #EBE1D5; border-radius: 10px; background-color: #FAFAFA; color: #5A4B3C; transition: border-color 0.3s; }
+        input[type="text"]:focus, textarea:focus { border-color: #7AA258; outline: none; background-color: #FFF; }
+        button { width: 100%; padding: 14px; border: none; cursor: pointer; border-radius: 10px; font-size: 16px; font-weight: bold; transition: transform 0.1s, box-shadow 0.1s; }
         button:active { transform: scale(0.98); }
         button:disabled { background-color: #D7CCC8; color: #8D6E63; cursor: not-allowed; box-shadow: none; }
-        
         .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        /* 相機按鈕：活潑的橘黃色 */
         .btn-camera { background-color: #FFF3E0; color: #E65100; border: 2px solid #FFCC80; }
-        /* 相簿按鈕：清新的淺綠色 */
         .btn-gallery { background-color: #E8F5E9; color: #2E7D32; border: 2px solid #A5D6A7; }
-        /* GPS按鈕：科技感淺藍色 */
         #gpsBtn { background-color: #E3F2FD; color: #1565C0; border: 2px solid #90CAF9; margin-bottom: 5px;}
-        /* 送出按鈕：主視覺大綠色 */
-        #submitBtn { 
-            background-color: #7AA258; color: white; border-radius: 30px; /* 特殊大圓角 */
-            font-size: 18px; box-shadow: 0 4px 10px rgba(122, 162, 88, 0.4); margin-top: 10px;
-        }
-
+        #submitBtn { background-color: #7AA258; color: white; border-radius: 30px; font-size: 18px; box-shadow: 0 4px 10px rgba(122, 162, 88, 0.4); margin-top: 10px; }
         #fileNameDisplay { font-size: 14px; color: #888; margin-top: 5px; margin-bottom: 15px; text-align: center; }
         #coords { font-size: 14px; color: #888; text-align: center; margin-top: 5px; margin-bottom: 15px;}
         #status { text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 15px;}
-        
-        /* 進度條樣式 */
         #progressContainer { display: none; margin-bottom: 15px; padding: 15px; background-color: #FFF; border: 2px solid #EBE1D5; border-radius: 12px; }
         progress { width: 100%; height: 18px; border-radius: 10px; overflow: hidden; }
         progress::-webkit-progress-bar { background-color: #F0F0F0; border-radius: 10px; }
@@ -112,41 +35,33 @@
 
     <h2>🛤️ 糖鐵遺跡現地調查</h2>
     
-    <!-- 第一張卡片：基本資料 -->
     <div class="form-card">
         <div class="card-title">📝 基本資料 (必填)</div>
-        
         <label>遺跡名稱：</label>
         <input type="text" id="name" placeholder="例如：蒜頭糖廠XX車站" required>
-
         <label>簡介與現況描述：</label>
         <textarea id="desc" rows="3" placeholder="描述現場狀況、周邊環境..." required></textarea>
     </div>
 
-    <!-- 第二張卡片：現地照片 -->
     <div class="form-card">
         <div class="card-title">📸 現地照片 (必附)</div>
-        
         <div class="btn-group">
             <button type="button" class="btn-camera" onclick="document.getElementById('photoCamera').click()">📷 開啟相機</button>
             <button type="button" class="btn-gallery" onclick="document.getElementById('photoGallery').click()">🖼️ 選擇相簿</button>
         </div>
         <p id="fileNameDisplay">尚未選擇照片</p>
-
-        <!-- 這裡修正為 accept="image/*" 以確保手機能正確辨識 capture="environment" 指令 -->
-        <input type="file" id="photoCamera" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+        
+        <!-- 將 capture 改為 camera 增強相容性 -->
+        <input type="file" id="photoCamera" accept="image/*" capture="camera" style="display: none;" onchange="handleFileSelect(this)">
         <input type="file" id="photoGallery" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
     </div>
 
-    <!-- 第三張卡片：空間定位與上傳 -->
     <div class="form-card" style="background-color: #F6F8F3; border-color: #DCE7D3;">
         <div class="card-title" style="border-bottom-color: #DCE7D3;">📍 座標與資料回傳</div>
-        
         <button type="button" id="gpsBtn" onclick="getLocation()">📍 獲取目前定位</button>
         <p id="coords">尚未獲取定位</p>
         <input type="hidden" id="lat">
         <input type="hidden" id="lng">
-
         <button type="button" id="submitBtn" onclick="submitForm()">🚀 確認送出調查資料</button>
         
         <p id="status"></p>
@@ -157,9 +72,7 @@
     </div>
 
     <script>
-        // 您的 Google Apps Script 網址
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtPVOc4NqmBwXxfGoTNsoxETakGKob5w74T1mzCumI3qZBMx816aMRIFZpMcx1Myh8/exec";
-
         let selectedFile = null;
         let progressInterval = null; 
 
@@ -174,7 +87,6 @@
         function getLocation() {
             const coordsText = document.getElementById("coords");
             coordsText.innerText = "定位中，請稍候...";
-            
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     document.getElementById("lat").value = position.coords.latitude;
@@ -212,92 +124,98 @@
                 const originalDataUrl = event.target.result;
                 let exifStr = null;
 
-                if (selectedFile.type === 'image/jpeg' || selectedFile.type === 'image/jpg') {
-                    try {
+                try {
+                    // 如果圖片太大，piexif 可能會當機，用 try-catch 包起來
+                    if (selectedFile.type === 'image/jpeg' || selectedFile.type === 'image/jpg') {
                         const exifObj = piexif.load(originalDataUrl);
                         if (exifObj["0th"] && exifObj["0th"][piexif.ImageIFD.Orientation]) {
                             exifObj["0th"][piexif.ImageIFD.Orientation] = 1; 
                         }
                         exifStr = piexif.dump(exifObj);
-                    } catch (e) {
-                        console.warn("讀取 EXIF 失敗", e);
                     }
+                } catch (e) {
+                    console.warn("讀取 EXIF 失敗或檔案過大", e);
                 }
 
                 const img = new Image();
                 img.src = originalDataUrl;
                 
+                // 圖片載入失敗時的防呆
+                img.onerror = function() {
+                    document.getElementById("status").innerText = "❌ 無法讀取圖片，請換一張照片試試。";
+                    document.getElementById("status").style.color = "red";
+                    document.getElementById("submitBtn").disabled = false;
+                };
+                
                 img.onload = async function() {
-                    const MAX_WIDTH = 1200;
-                    const MAX_HEIGHT = 1200;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
-                    if (exifStr) {
-                        try { compressedDataUrl = piexif.insert(exifStr, compressedDataUrl); } 
-                        catch (e) { console.warn("寫回 EXIF 失敗", e); }
-                    }
-                    
-                    const base64Data = compressedDataUrl.split(',')[1];
-                    
-                    const payload = {
-                        name: name,
-                        desc: desc,
-                        lat: lat,
-                        lng: lng,
-                        image: base64Data,
-                        mimeType: 'image/jpeg',
-                        filename: 'compressed_' + selectedFile.name.replace(/\.[^/.]+$/, "") + '.jpg'
-                    };
-
-                    document.getElementById("status").innerText = "🚀 正在傳送資料...";
-                    document.getElementById("status").style.color = "#7AA258";
-                    document.getElementById("progressContainer").style.display = "block";
-                    const progressBar = document.getElementById("progressBar");
-                    const progressText = document.getElementById("progressText");
-                    
-                    let simulatedProgress = 0;
-                    progressBar.value = 0;
-                    
-                    progressInterval = setInterval(() => {
-                        if (simulatedProgress < 90) {
-                            const increment = simulatedProgress < 60 ? Math.floor(Math.random() * 8) + 2 : Math.floor(Math.random() * 3) + 1;
-                            simulatedProgress += increment;
-                            if(simulatedProgress > 90) simulatedProgress = 90; 
-                            
-                            progressBar.value = simulatedProgress;
-                            progressText.innerText = `${simulatedProgress}% - 上傳與 Google 雲端寫入中...`;
-                        }
-                    }, 500);
-
                     try {
+                        const MAX_WIDTH = 1200;
+                        const MAX_HEIGHT = 1200;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                        if (exifStr) {
+                            try { compressedDataUrl = piexif.insert(exifStr, compressedDataUrl); } 
+                            catch (e) { console.warn("寫回 EXIF 失敗", e); }
+                        }
+                        
+                        const base64Data = compressedDataUrl.split(',')[1];
+                        
+                        const payload = {
+                            name: name,
+                            desc: desc,
+                            lat: lat,
+                            lng: lng,
+                            image: base64Data,
+                            mimeType: 'image/jpeg',
+                            filename: 'compressed_' + selectedFile.name.replace(/\.[^/.]+$/, "") + '.jpg'
+                        };
+
+                        document.getElementById("status").innerText = "🚀 正在傳送資料...";
+                        document.getElementById("status").style.color = "#7AA258";
+                        document.getElementById("progressContainer").style.display = "block";
+                        const progressBar = document.getElementById("progressBar");
+                        const progressText = document.getElementById("progressText");
+                        
+                        let simulatedProgress = 0;
+                        progressBar.value = 0;
+                        
+                        progressInterval = setInterval(() => {
+                            if (simulatedProgress < 90) {
+                                const increment = simulatedProgress < 60 ? Math.floor(Math.random() * 8) + 2 : Math.floor(Math.random() * 3) + 1;
+                                simulatedProgress += increment;
+                                if(simulatedProgress > 90) simulatedProgress = 90; 
+                                progressBar.value = simulatedProgress;
+                                progressText.innerText = `${simulatedProgress}% - 上傳與 Google 雲端寫入中...`;
+                            }
+                        }, 500);
+
                         const response = await fetch(GOOGLE_SCRIPT_URL, {
                             method: "POST",
                             body: JSON.stringify(payload)
                         });
                         
                         const result = await response.json();
-                        
                         clearInterval(progressInterval);
 
                         if (result.status === "success") {
@@ -320,15 +238,15 @@
                                 document.getElementById("lat").value = "";
                                 document.getElementById("lng").value = "";
                             }, 2000);
-                            
                         } else {
                             document.getElementById("status").style.color = "red";
                             document.getElementById("status").innerText = "雲端硬碟錯誤：" + result.message;
                         }
                     } catch (error) {
-                        clearInterval(progressInterval);
+                        // 攔截所有壓縮過程或傳輸過程的當機，並顯示在畫面上
+                        if(progressInterval) clearInterval(progressInterval);
                         document.getElementById("status").style.color = "red";
-                        document.getElementById("status").innerText = "網路連線失敗，請稍後再試。";
+                        document.getElementById("status").innerText = "系統錯誤：" + error.message;
                     } finally {
                         document.getElementById("submitBtn").disabled = false;
                     }
