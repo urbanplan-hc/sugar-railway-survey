@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>糖廠鐵路遺跡現地調查表</title>
+    <!-- 載入 piexif.js 函式庫來處理 EXIF 資料 -->
     <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <style>
         /* 1. 溫暖的米色背景與字體設定 */
@@ -132,8 +133,9 @@
         </div>
         <p id="fileNameDisplay">尚未選擇照片</p>
 
-        <input type="file" id="photoCamera" accept="image/jpeg, image/png" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
-        <input type="file" id="photoGallery" accept="image/jpeg, image/png" style="display: none;" onchange="handleFileSelect(this)">
+        <!-- 這裡修正為 accept="image/*" 以確保手機能正確辨識 capture="environment" 指令 -->
+        <input type="file" id="photoCamera" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+        <input type="file" id="photoGallery" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
     </div>
 
     <!-- 第三張卡片：空間定位與上傳 -->
