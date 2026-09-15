@@ -4,83 +4,171 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>糖廠鐵路遺跡現地調查表</title>
-    <!-- 載入 piexif.js 函式庫來處理 EXIF 資料 -->
     <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-        input[type="text"], textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; font-size: 16px; }
-        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 5px; padding: 12px; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        /* 1. 溫暖的米色背景與字體設定 */
+        body { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, '微軟正黑體', sans-serif; 
+            background-color: #FDF9F1; /* 米色背景 */
+            color: #5A4B3C; /* 深咖啡色字體 */
+            padding: 15px; 
+            max-width: 500px; 
+            margin: auto; 
+        }
+
+        /* 2. 頂部主視覺標題 (模仿綠色橫幅) */
+        h2 {
+            background-color: #7AA258; /* 抹茶綠 */
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(122, 162, 88, 0.2);
+            letter-spacing: 1px;
+        }
+
+        /* 3. 卡片式排版 (模仿白底圓角區塊) */
+        .form-card {
+            background-color: #FFFFFF;
+            border: 2px solid #EBE1D5; /* 淺奶茶色邊框 */
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        /* 卡片內的小標題 */
+        .card-title {
+            color: #7AA258;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed #EBE1D5; /* 虛線分隔線 */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 4. 輸入框與文字區塊美化 */
+        label { font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; color: #796652; }
+        input[type="text"], textarea { 
+            width: 100%; 
+            margin-bottom: 15px; 
+            padding: 12px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            border: 2px solid #EBE1D5;
+            border-radius: 10px;
+            background-color: #FAFAFA;
+            color: #5A4B3C;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: #7AA258; /* 點擊時外框變綠色 */
+            outline: none;
+            background-color: #FFF;
+        }
+
+        /* 5. 按鈕美化 (圓角、圖示、跳色) */
+        button { 
+            width: 100%; padding: 14px; border: none; cursor: pointer; 
+            border-radius: 10px; font-size: 16px; font-weight: bold; 
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #D7CCC8; color: #8D6E63; cursor: not-allowed; box-shadow: none; }
         
-        /* 雙按鈕排版設定 */
-        .btn-group { display: flex; gap: 10px; margin-bottom: 5px; }
-        .btn-camera { background-color: #2196F3; flex: 1; }
-        .btn-gallery { background-color: #FF9800; flex: 1; }
-        
-        #fileNameDisplay { font-size: 14px; color: #555; margin-top: 0; margin-bottom: 15px; }
-        #status { color: red; font-weight: bold; margin-bottom: 5px; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        /* 相機按鈕：活潑的橘黃色 */
+        .btn-camera { background-color: #FFF3E0; color: #E65100; border: 2px solid #FFCC80; }
+        /* 相簿按鈕：清新的淺綠色 */
+        .btn-gallery { background-color: #E8F5E9; color: #2E7D32; border: 2px solid #A5D6A7; }
+        /* GPS按鈕：科技感淺藍色 */
+        #gpsBtn { background-color: #E3F2FD; color: #1565C0; border: 2px solid #90CAF9; margin-bottom: 5px;}
+        /* 送出按鈕：主視覺大綠色 */
+        #submitBtn { 
+            background-color: #7AA258; color: white; border-radius: 30px; /* 特殊大圓角 */
+            font-size: 18px; box-shadow: 0 4px 10px rgba(122, 162, 88, 0.4); margin-top: 10px;
+        }
+
+        #fileNameDisplay { font-size: 14px; color: #888; margin-top: 5px; margin-bottom: 15px; text-align: center; }
+        #coords { font-size: 14px; color: #888; text-align: center; margin-top: 5px; margin-bottom: 15px;}
+        #status { text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 15px;}
         
         /* 進度條樣式 */
-        #progressContainer { display: none; margin-bottom: 15px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; }
-        progress { width: 100%; height: 22px; }
-        #progressText { text-align: center; font-size: 14px; color: #333; margin-top: 5px; font-weight: bold; }
+        #progressContainer { display: none; margin-bottom: 15px; padding: 15px; background-color: #FFF; border: 2px solid #EBE1D5; border-radius: 12px; }
+        progress { width: 100%; height: 18px; border-radius: 10px; overflow: hidden; }
+        progress::-webkit-progress-bar { background-color: #F0F0F0; border-radius: 10px; }
+        progress::-webkit-progress-value { background-color: #7AA258; border-radius: 10px; }
+        #progressText { text-align: center; font-size: 14px; color: #5A4B3C; margin-top: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <h2>🛤️ 糖鐵遺跡現地調查</h2>
     
-    <label>遺跡名稱：</label>
-    <input type="text" id="name" placeholder="例如：蒜頭糖廠XX車站" required>
+    <!-- 第一張卡片：基本資料 -->
+    <div class="form-card">
+        <div class="card-title">📝 基本資料 (必填)</div>
+        
+        <label>遺跡名稱：</label>
+        <input type="text" id="name" placeholder="例如：蒜頭糖廠XX車站" required>
 
-    <label>簡介與現況描述：</label>
-    <textarea id="desc" rows="4" placeholder="描述現場狀況..." required></textarea>
-
-    <label>現地照片：</label>
-    <div class="btn-group">
-        <!-- 點擊觸發隱藏的相機輸入框 -->
-        <button type="button" class="btn-camera" onclick="document.getElementById('photoCamera').click()">📷 開啟相機</button>
-        <!-- 點擊觸發隱藏的相簿輸入框 -->
-        <button type="button" class="btn-gallery" onclick="document.getElementById('photoGallery').click()">🖼️ 選擇相簿</button>
+        <label>簡介與現況描述：</label>
+        <textarea id="desc" rows="3" placeholder="描述現場狀況、周邊環境..." required></textarea>
     </div>
-    <p id="fileNameDisplay">尚未選擇照片</p>
 
-    <!-- 隱藏的 input，用來實際接收檔案 -->
-    <input type="file" id="photoCamera" accept="image/jpeg, image/png" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
-    <input type="file" id="photoGallery" accept="image/jpeg, image/png" style="display: none;" onchange="handleFileSelect(this)">
+    <!-- 第二張卡片：現地照片 -->
+    <div class="form-card">
+        <div class="card-title">📸 現地照片 (必附)</div>
+        
+        <div class="btn-group">
+            <button type="button" class="btn-camera" onclick="document.getElementById('photoCamera').click()">📷 開啟相機</button>
+            <button type="button" class="btn-gallery" onclick="document.getElementById('photoGallery').click()">🖼️ 選擇相簿</button>
+        </div>
+        <p id="fileNameDisplay">尚未選擇照片</p>
 
-    <label>GPS 座標：</label>
-    <button type="button" id="gpsBtn" onclick="getLocation()">📍 獲取目前定位</button>
-    <p id="coords">尚未獲取定位</p>
-    <input type="hidden" id="lat">
-    <input type="hidden" id="lng">
+        <input type="file" id="photoCamera" accept="image/jpeg, image/png" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+        <input type="file" id="photoGallery" accept="image/jpeg, image/png" style="display: none;" onchange="handleFileSelect(this)">
+    </div>
 
-    <button type="button" id="submitBtn" onclick="submitForm()">🚀 上傳調查資料</button>
-    
-    <!-- 狀態與進度條區塊 -->
-    <p id="status"></p>
-    <div id="progressContainer">
-        <progress id="progressBar" value="0" max="100"></progress>
-        <div id="progressText">0%</div>
+    <!-- 第三張卡片：空間定位與上傳 -->
+    <div class="form-card" style="background-color: #F6F8F3; border-color: #DCE7D3;">
+        <div class="card-title" style="border-bottom-color: #DCE7D3;">📍 座標與資料回傳</div>
+        
+        <button type="button" id="gpsBtn" onclick="getLocation()">📍 獲取目前定位</button>
+        <p id="coords">尚未獲取定位</p>
+        <input type="hidden" id="lat">
+        <input type="hidden" id="lng">
+
+        <button type="button" id="submitBtn" onclick="submitForm()">🚀 確認送出調查資料</button>
+        
+        <p id="status"></p>
+        <div id="progressContainer">
+            <progress id="progressBar" value="0" max="100"></progress>
+            <div id="progressText">0%</div>
+        </div>
     </div>
 
     <script>
-        // 您的 Google Apps Script 網址 (已為您填入)
+        // 您的 Google Apps Script 網址
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtPVOc4NqmBwXxfGoTNsoxETakGKob5w74T1mzCumI3qZBMx816aMRIFZpMcx1Myh8/exec";
 
         let selectedFile = null;
-        let progressInterval = null; // 用來控制模擬進度條的計時器
+        let progressInterval = null; 
 
-        // 處理照片選擇的顯示
         function handleFileSelect(input) {
             if (input.files.length > 0) {
                 selectedFile = input.files[0];
                 document.getElementById('fileNameDisplay').innerText = "✅ 已選擇：" + selectedFile.name;
-                document.getElementById('fileNameDisplay').style.color = "green";
+                document.getElementById('fileNameDisplay').style.color = "#2E7D32";
             }
         }
 
-        // 獲取 GPS 定位
         function getLocation() {
             const coordsText = document.getElementById("coords");
             coordsText.innerText = "定位中，請稍候...";
@@ -90,15 +178,16 @@
                     document.getElementById("lat").value = position.coords.latitude;
                     document.getElementById("lng").value = position.coords.longitude;
                     coordsText.innerText = `緯度: ${position.coords.latitude}\n經度: ${position.coords.longitude}`;
+                    coordsText.style.color = "#1565C0";
                 }, function(error) {
                     coordsText.innerText = "無法獲取定位，請確認手機是否開啟 GPS 權限。";
+                    coordsText.style.color = "red";
                 });
             } else {
                 coordsText.innerText = "您的瀏覽器不支援定位功能。";
             }
         }
 
-        // 處理資料上傳
         async function submitForm() {
             const name = document.getElementById("name").value;
             const desc = document.getElementById("desc").value;
@@ -110,9 +199,8 @@
                 return;
             }
 
-            // --- 階段 1：初始化介面與壓縮照片 ---
             document.getElementById("status").innerText = "📸 照片壓縮處理中...";
-            document.getElementById("status").style.color = "#FF9800";
+            document.getElementById("status").style.color = "#E65100";
             document.getElementById("submitBtn").disabled = true;
             document.getElementById("progressContainer").style.display = "none";
 
@@ -180,8 +268,8 @@
                         filename: 'compressed_' + selectedFile.name.replace(/\.[^/.]+$/, "") + '.jpg'
                     };
 
-                    // --- 階段 2：啟動模擬進度條與網路傳輸 ---
                     document.getElementById("status").innerText = "🚀 正在傳送資料...";
+                    document.getElementById("status").style.color = "#7AA258";
                     document.getElementById("progressContainer").style.display = "block";
                     const progressBar = document.getElementById("progressBar");
                     const progressText = document.getElementById("progressText");
@@ -189,13 +277,11 @@
                     let simulatedProgress = 0;
                     progressBar.value = 0;
                     
-                    // 每 0.5 秒推進一次進度條
                     progressInterval = setInterval(() => {
                         if (simulatedProgress < 90) {
-                            // 前期(網路傳輸)跑比較快，後期(等待Google儲存)跑比較慢
                             const increment = simulatedProgress < 60 ? Math.floor(Math.random() * 8) + 2 : Math.floor(Math.random() * 3) + 1;
                             simulatedProgress += increment;
-                            if(simulatedProgress > 90) simulatedProgress = 90; // 卡在90%等待
+                            if(simulatedProgress > 90) simulatedProgress = 90; 
                             
                             progressBar.value = simulatedProgress;
                             progressText.innerText = `${simulatedProgress}% - 上傳與 Google 雲端寫入中...`;
@@ -203,7 +289,6 @@
                     }, 500);
 
                     try {
-                        // 使用最穩定的 fetch 語法，避開 CORS 阻擋問題
                         const response = await fetch(GOOGLE_SCRIPT_URL, {
                             method: "POST",
                             body: JSON.stringify(payload)
@@ -211,16 +296,14 @@
                         
                         const result = await response.json();
                         
-                        // --- 階段 3：收到成功回應，進度條直接拉滿 ---
-                        clearInterval(progressInterval); // 停止模擬計時
+                        clearInterval(progressInterval);
 
                         if (result.status === "success") {
                             progressBar.value = 100;
                             progressText.innerText = "100% - 寫入完成！";
-                            document.getElementById("status").style.color = "green";
-                            document.getElementById("status").innerText = "🎉 上傳成功！";
+                            document.getElementById("status").style.color = "#2E7D32";
+                            document.getElementById("status").innerText = "🎉 上傳成功！感謝您的調查";
                             
-                            // 延遲 1.5 秒後清空表單與隱藏進度條，讓使用者看得到 100% 成功的畫面
                             setTimeout(() => {
                                 document.getElementById("progressContainer").style.display = "none";
                                 document.getElementById("name").value = "";
@@ -229,11 +312,12 @@
                                 document.getElementById('photoCamera').value = "";
                                 document.getElementById('photoGallery').value = "";
                                 document.getElementById('fileNameDisplay').innerText = "尚未選擇照片";
-                                document.getElementById('fileNameDisplay').style.color = "#555";
+                                document.getElementById('fileNameDisplay').style.color = "#888";
                                 document.getElementById("coords").innerText = "尚未獲取定位";
+                                document.getElementById("coords").style.color = "#888";
                                 document.getElementById("lat").value = "";
                                 document.getElementById("lng").value = "";
-                            }, 1500);
+                            }, 2000);
                             
                         } else {
                             document.getElementById("status").style.color = "red";
