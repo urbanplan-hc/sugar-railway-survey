@@ -9,7 +9,7 @@
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
         input[type="text"], textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; font-size: 16px; }
-        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 5px; padding: 12px; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         
         /* 雙按鈕排版設定 */
@@ -18,10 +18,10 @@
         .btn-gallery { background-color: #FF9800; flex: 1; }
         
         #fileNameDisplay { font-size: 14px; color: #555; margin-top: 0; margin-bottom: 15px; }
-        #status { color: red; font-weight: bold; margin-bottom: 5px;}
+        #status { color: red; font-weight: bold; margin-bottom: 5px; }
         
         /* 進度條樣式 */
-        #progressContainer { display: none; margin-bottom: 15px; }
+        #progressContainer { display: none; margin-bottom: 15px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; }
         progress { width: 100%; height: 22px; }
         #progressText { text-align: center; font-size: 14px; color: #333; margin-top: 5px; font-weight: bold; }
     </style>
@@ -55,7 +55,7 @@
     <input type="hidden" id="lat">
     <input type="hidden" id="lng">
 
-    <button type="button" id="submitBtn" onclick="submitForm()">上傳調查資料</button>
+    <button type="button" id="submitBtn" onclick="submitForm()">🚀 上傳調查資料</button>
     
     <!-- 狀態與進度條區塊 -->
     <p id="status"></p>
@@ -65,10 +65,11 @@
     </div>
 
     <script>
-        // ⚠️ 請務必將下方網址換成你的 Google Apps Script 網頁應用程式網址 ⚠️
+        // 您的 Google Apps Script 網址 (已為您填入)
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtPVOc4NqmBwXxfGoTNsoxETakGKob5w74T1mzCumI3qZBMx816aMRIFZpMcx1Myh8/exec";
 
         let selectedFile = null;
+        let progressInterval = null; // 用來控制模擬進度條的計時器
 
         // 處理照片選擇的顯示
         function handleFileSelect(input) {
@@ -97,7 +98,7 @@
             }
         }
 
-        // 處理資料上傳 (包含 EXIF 保留與照片壓縮)
+        // 處理資料上傳
         async function submitForm() {
             const name = document.getElementById("name").value;
             const desc = document.getElementById("desc").value;
@@ -109,29 +110,27 @@
                 return;
             }
 
-            // 初始化介面狀態
+            // --- 階段 1：初始化介面與壓縮照片 ---
             document.getElementById("status").innerText = "📸 照片壓縮處理中...";
-            document.getElementById("status").style.color = "#FF9800"; // 橘色提示
+            document.getElementById("status").style.color = "#FF9800";
             document.getElementById("submitBtn").disabled = true;
-            document.getElementById("progressContainer").style.display = "none"; // 壓縮時先不顯示進度條
+            document.getElementById("progressContainer").style.display = "none";
 
             const reader = new FileReader();
             
-            // 讀取照片檔案
             reader.onload = function(event) {
                 const originalDataUrl = event.target.result;
                 let exifStr = null;
 
-                // 嘗試提取 EXIF 資料 (僅限 JPEG 格式)
                 if (selectedFile.type === 'image/jpeg' || selectedFile.type === 'image/jpg') {
                     try {
                         const exifObj = piexif.load(originalDataUrl);
                         if (exifObj["0th"] && exifObj["0th"][piexif.ImageIFD.Orientation]) {
-                            exifObj["0th"][piexif.ImageIFD.Orientation] = 1; // 重設旋轉參數
+                            exifObj["0th"][piexif.ImageIFD.Orientation] = 1; 
                         }
                         exifStr = piexif.dump(exifObj);
                     } catch (e) {
-                        console.warn("讀取 EXIF 失敗或圖片無 EXIF 資料", e);
+                        console.warn("讀取 EXIF 失敗", e);
                     }
                 }
 
@@ -139,7 +138,6 @@
                 img.src = originalDataUrl;
                 
                 img.onload = async function() {
-                    // 設定最大尺寸 1200px
                     const MAX_WIDTH = 1200;
                     const MAX_HEIGHT = 1200;
                     let width = img.width;
@@ -157,7 +155,6 @@
                         }
                     }
 
-                    // Canvas 壓縮
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
                     canvas.height = height;
@@ -166,13 +163,9 @@
 
                     let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
 
-                    // 將暫存的 EXIF 寫回壓縮後的新圖片
                     if (exifStr) {
-                        try {
-                            compressedDataUrl = piexif.insert(exifStr, compressedDataUrl);
-                        } catch (e) {
-                            console.warn("寫回 EXIF 失敗", e);
-                        }
+                        try { compressedDataUrl = piexif.insert(exifStr, compressedDataUrl); } 
+                        catch (e) { console.warn("寫回 EXIF 失敗", e); }
                     }
                     
                     const base64Data = compressedDataUrl.split(',')[1];
@@ -187,78 +180,69 @@
                         filename: 'compressed_' + selectedFile.name.replace(/\.[^/.]+$/, "") + '.jpg'
                     };
 
-                    // 開始準備上傳，顯示進度條
+                    // --- 階段 2：啟動模擬進度條與網路傳輸 ---
                     document.getElementById("status").innerText = "🚀 正在傳送資料...";
                     document.getElementById("progressContainer").style.display = "block";
-                    document.getElementById("progressBar").value = 0;
-                    document.getElementById("progressText").innerText = "0%";
+                    const progressBar = document.getElementById("progressBar");
+                    const progressText = document.getElementById("progressText");
+                    
+                    let simulatedProgress = 0;
+                    progressBar.value = 0;
+                    
+                    // 每 0.5 秒推進一次進度條
+                    progressInterval = setInterval(() => {
+                        if (simulatedProgress < 90) {
+                            // 前期(網路傳輸)跑比較快，後期(等待Google儲存)跑比較慢
+                            const increment = simulatedProgress < 60 ? Math.floor(Math.random() * 8) + 2 : Math.floor(Math.random() * 3) + 1;
+                            simulatedProgress += increment;
+                            if(simulatedProgress > 90) simulatedProgress = 90; // 卡在90%等待
+                            
+                            progressBar.value = simulatedProgress;
+                            progressText.innerText = `${simulatedProgress}% - 上傳與 Google 雲端寫入中...`;
+                        }
+                    }, 500);
 
                     try {
-                        // 使用 Promise 包裝 XMLHttpRequest 以支援進度條
-                        const result = await new Promise((resolve, reject) => {
-                            const xhr = new XMLHttpRequest();
-                            xhr.open("POST", GOOGLE_SCRIPT_URL, true);
-                            
-                            // 監聽上傳進度 (關鍵部分)
-                            xhr.upload.onprogress = function(event) {
-                                if (event.lengthComputable) {
-                                    const percent = Math.round((event.loaded / event.total) * 100);
-                                    document.getElementById("progressBar").value = percent;
-                                    
-                                    if (percent < 100) {
-                                        document.getElementById("progressText").innerText = `上傳中... ${percent}%`;
-                                    } else {
-                                        document.getElementById("progressText").innerText = `100% (等待 Google 伺服器寫入硬碟中...)`;
-                                    }
-                                }
-                            };
-
-                            // 處理回傳結果
-                            xhr.onload = function() {
-                                if (xhr.status >= 200 && xhr.status < 300) {
-                                    try {
-                                        resolve(JSON.parse(xhr.responseText));
-                                    } catch (e) {
-                                        reject(new Error("解析回傳結果失敗"));
-                                    }
-                                } else {
-                                    reject(new Error("伺服器錯誤狀態碼：" + xhr.status));
-                                }
-                            };
-
-                            // 處理網路錯誤
-                            xhr.onerror = function() {
-                                reject(new Error("網路連線失敗"));
-                            };
-
-                            // 送出資料
-                            xhr.send(JSON.stringify(payload));
+                        // 使用最穩定的 fetch 語法，避開 CORS 阻擋問題
+                        const response = await fetch(GOOGLE_SCRIPT_URL, {
+                            method: "POST",
+                            body: JSON.stringify(payload)
                         });
                         
-                        // 處理回傳成功
+                        const result = await response.json();
+                        
+                        // --- 階段 3：收到成功回應，進度條直接拉滿 ---
+                        clearInterval(progressInterval); // 停止模擬計時
+
                         if (result.status === "success") {
+                            progressBar.value = 100;
+                            progressText.innerText = "100% - 寫入完成！";
                             document.getElementById("status").style.color = "green";
                             document.getElementById("status").innerText = "🎉 上傳成功！";
-                            document.getElementById("progressContainer").style.display = "none";
                             
-                            // 清空表單
-                            document.getElementById("name").value = "";
-                            document.getElementById("desc").value = "";
-                            selectedFile = null;
-                            document.getElementById('photoCamera').value = "";
-                            document.getElementById('photoGallery').value = "";
-                            document.getElementById('fileNameDisplay').innerText = "尚未選擇照片";
-                            document.getElementById('fileNameDisplay').style.color = "#555";
-                            document.getElementById("coords").innerText = "尚未獲取定位";
-                            document.getElementById("lat").value = "";
-                            document.getElementById("lng").value = "";
+                            // 延遲 1.5 秒後清空表單與隱藏進度條，讓使用者看得到 100% 成功的畫面
+                            setTimeout(() => {
+                                document.getElementById("progressContainer").style.display = "none";
+                                document.getElementById("name").value = "";
+                                document.getElementById("desc").value = "";
+                                selectedFile = null;
+                                document.getElementById('photoCamera').value = "";
+                                document.getElementById('photoGallery').value = "";
+                                document.getElementById('fileNameDisplay').innerText = "尚未選擇照片";
+                                document.getElementById('fileNameDisplay').style.color = "#555";
+                                document.getElementById("coords").innerText = "尚未獲取定位";
+                                document.getElementById("lat").value = "";
+                                document.getElementById("lng").value = "";
+                            }, 1500);
+                            
                         } else {
                             document.getElementById("status").style.color = "red";
                             document.getElementById("status").innerText = "雲端硬碟錯誤：" + result.message;
                         }
                     } catch (error) {
+                        clearInterval(progressInterval);
                         document.getElementById("status").style.color = "red";
-                        document.getElementById("status").innerText = error.message || "網路連線失敗，請稍後再試。";
+                        document.getElementById("status").innerText = "網路連線失敗，請稍後再試。";
                     } finally {
                         document.getElementById("submitBtn").disabled = false;
                     }
